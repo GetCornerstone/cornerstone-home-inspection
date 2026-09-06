@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { business, scheduleAddons, scheduleSubjects } from "@/lib/business";
+import { notifyOfficeFromBrowser } from "@/lib/notify-office-browser";
 import type { AutoReply } from "@/lib/auto-reply";
 
 export function ScheduleForm() {
@@ -15,6 +16,7 @@ export function ScheduleForm() {
   const [message, setMessage] = useState("");
   const [reply, setReply] = useState<AutoReply | null>(null);
   const [delivery, setDelivery] = useState<"on-site" | "email" | null>(null);
+  const [officeNote, setOfficeNote] = useState<"sent" | "pending" | "saved">("saved");
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,23 +27,40 @@ export function ScheduleForm() {
     const addons = formData.getAll("addons").map(String);
     const data = Object.fromEntries(formData.entries());
 
+    const payload = {
+      name: String(data.name ?? ""),
+      email: String(data.email ?? ""),
+      phone: String(data.phone ?? ""),
+      subject: String(data.subject ?? ""),
+      address: String(data.address ?? ""),
+      message: String(data.message ?? ""),
+      addons,
+    };
+
     try {
-      const response = await fetch("/api/schedule", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, addons }),
-      });
-      const payload = (await response.json()) as {
+      const [response, officeMail] = await Promise.all([
+        fetch("/api/schedule", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }),
+        notifyOfficeFromBrowser(payload).catch(() => ({ ok: false, pending: false })),
+      ]);
+      const result = (await response.json()) as {
         ok?: boolean;
         error?: string;
         autoReply?: AutoReply;
         delivery?: "on-site" | "email";
+        officeNotified?: boolean;
       };
-      if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || "Something went wrong.");
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || "Something went wrong.");
       }
-      setReply(payload.autoReply ?? null);
-      setDelivery(payload.delivery ?? "on-site");
+      setReply(result.autoReply ?? null);
+      setDelivery(result.delivery ?? "on-site");
+      setOfficeNote(
+        officeMail.pending ? "pending" : officeMail.ok || result.officeNotified ? "sent" : "saved",
+      );
       setStatus("success");
       form.reset();
     } catch (error) {
@@ -64,9 +83,11 @@ export function ScheduleForm() {
           Here is your automatic reply
         </h3>
         <p className="mt-3 text-sm leading-relaxed text-brand-ink/70">
-          {delivery === "email"
-            ? "A copy was also emailed to you and to the office."
-            : "John will follow up in person. If email sending is connected later, replies will go out automatically as well."}{" "}
+          {officeNote === "sent" || officeNote === "pending"
+            ? "John was emailed at the office address. He will follow up to confirm timing and a quote."
+            : delivery === "email"
+              ? "A copy was emailed to you. John will follow up to confirm timing and a quote."
+              : "Your request was saved. John will follow up."}{" "}
           For a same-day answer, call or text{" "}
           <a className="font-semibold text-brand-gold" href={`tel:${business.phoneTel}`}>
             {business.phone}
@@ -84,6 +105,7 @@ export function ScheduleForm() {
             setStatus("idle");
             setReply(null);
             setDelivery(null);
+            setOfficeNote("saved");
           }}
         >
           Send another message

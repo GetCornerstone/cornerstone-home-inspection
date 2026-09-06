@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { composeAutoReply } from "@/lib/auto-reply";
 import { recordRequest } from "@/lib/office-store";
-import { sendAutoReplyEmail } from "@/lib/send-email";
+import { notifyOffice, sendAutoReplyEmail } from "@/lib/send-email";
 
 export const runtime = "nodejs";
 
@@ -43,20 +43,28 @@ export async function POST(request: Request) {
     const payload = { name, email, phone, subject, address, message, addons };
     const autoReply = composeAutoReply(payload);
 
+    const office = await notifyOffice(payload);
+
     let delivery: "on-site" | "email" = "on-site";
-    let emailError: string | undefined;
+    let emailError: string | undefined = office.error;
     try {
       const result = await sendAutoReplyEmail(email, autoReply);
       if (result.sent) delivery = "email";
     } catch (error) {
-      emailError = error instanceof Error ? error.message : "Email send failed.";
+      const clientError = error instanceof Error ? error.message : "Client email send failed.";
+      emailError = emailError ? `${emailError} ${clientError}` : clientError;
     }
 
-    await recordRequest(payload, autoReply, delivery, emailError);
+    await recordRequest(payload, autoReply, delivery, {
+      emailError,
+      officeNotified: office.notified,
+      officeChannel: office.channel,
+    });
 
     return NextResponse.json({
       ok: true,
       delivery,
+      officeNotified: office.notified,
       autoReply,
     });
   } catch {

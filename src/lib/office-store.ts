@@ -18,6 +18,8 @@ export type StoredRequest = InspectionRequest & {
   at: string;
   autoReply: AutoReply;
   delivery: "on-site" | "email";
+  officeNotified?: boolean;
+  officeChannel?: string;
   emailError?: string;
 };
 
@@ -89,7 +91,7 @@ export async function recordRequest(
   request: InspectionRequest,
   autoReply: AutoReply,
   delivery: StoredRequest["delivery"],
-  emailError?: string,
+  extra?: { emailError?: string; officeNotified?: boolean; officeChannel?: string },
 ) {
   const store = await loadStore();
   const record: StoredRequest = {
@@ -98,7 +100,9 @@ export async function recordRequest(
     ...request,
     autoReply,
     delivery,
-    emailError,
+    officeNotified: extra?.officeNotified,
+    officeChannel: extra?.officeChannel,
+    emailError: extra?.emailError,
   };
   store.requests.unshift(record);
   await persist(store);

@@ -5,7 +5,7 @@ import { business, navLinks } from "@/lib/business";
 
 export function SiteFooter() {
   return (
-    <footer className="bg-brand-ink text-white">
+    <footer className="bg-brand-ink text-white print:hidden">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-3">
         <div>
           <BrandLogo inverted />

@@ -16,7 +16,7 @@ export default function SchedulePage() {
           <p className="text-sm text-white/60">Home / Schedule now</p>
           <h1 className="mt-3 text-4xl font-bold sm:text-5xl">Schedule your inspection today</h1>
           <p className="mt-4 max-w-2xl text-white/75">
-            Call, email, or send a message. You will get an immediate written reply from the site, then John follows up to confirm timing and a quote.
+            Call, email, or send a message. You will get an immediate written reply on this page, and John is emailed at the office address so he can follow up.
           </p>
         </div>
       </div>
@@ -47,7 +47,7 @@ export default function SchedulePage() {
         <div>
           <h2 className="mb-4 text-2xl font-semibold">Send us a message</h2>
           <p className="mb-6 text-sm text-brand-ink/70">
-            Have questions or need to schedule an inspection? Send the form below. An automatic reply is generated right away so you know the request landed.
+            Have questions or need to schedule an inspection? Send the form below. You will see a written reply on this page right away. John is also emailed at {business.email}.
           </p>
           <ScheduleForm />
         </div>

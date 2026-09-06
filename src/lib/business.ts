@@ -15,6 +15,7 @@ export const business = {
   email: "GetCornerstoneHI@Gmail.com",
   hours: "Call or email to schedule",
   hoursShort: "We Protect Your Interests",
+  websiteUrl: "https://cornerstone-home-inspection-g772.vercel.app",
 } as const;
 
 /** About Me copy — edit these paragraphs to change the homepage About section. */

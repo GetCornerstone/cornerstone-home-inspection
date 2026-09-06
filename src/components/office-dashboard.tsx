@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,8 @@ type StoredRequest = {
   message: string;
   addons: string[];
   delivery: "on-site" | "email";
+  officeNotified?: boolean;
+  officeChannel?: string;
   emailError?: string;
   autoReply: { subject: string; fullText: string; topics: string[] };
 };
@@ -177,6 +180,7 @@ export function OfficeDashboard() {
         <h1 className="mt-3 text-3xl font-bold text-brand-ink">Review site activity</h1>
         <p className="mt-3 text-sm text-brand-ink/70">
           Enter the office PIN to see page views, inspection requests, and every automatic reply.
+          New requests are also emailed to GetCornerstoneHI@Gmail.com — check Inbox and Spam.
         </p>
         <form onSubmit={signIn} className="mt-8 border border-black/10 bg-white p-6">
           <Label htmlFor="pin" className="text-xs font-semibold tracking-wide uppercase">
@@ -234,7 +238,9 @@ export function OfficeDashboard() {
             <p className="text-sm text-white/60">Office / Analytics</p>
             <h1 className="mt-2 text-3xl font-bold sm:text-4xl">All site data</h1>
             <p className="mt-2 text-sm text-white/70">
-              Updated {formatWhen(data.generatedAt)}. This is first-party data from this website, not Google Analytics.
+              Updated {formatWhen(data.generatedAt)}. New inspection requests are emailed to
+              GetCornerstoneHI@Gmail.com. Check Inbox and Spam. This on-screen list can reset
+              on the hosted site; Gmail is the inbox that lasts.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -306,6 +312,42 @@ export function OfficeDashboard() {
           <div className="mt-8 grid gap-8 lg:grid-cols-2">
             <CountTable title="Pages" rows={data.topPages} empty="No page views yet. Browse the site, then refresh." />
             <CountTable title="Referrers" rows={data.topReferrers} empty="No referrers recorded yet." />
+            <section className="border border-black/10 bg-white lg:col-span-2">
+              <h2 className="border-b border-black/10 px-4 py-3 font-semibold text-brand-ink">
+                Website QR code
+              </h2>
+              <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+                <Image
+                  src="/images/website-qr.png"
+                  alt="QR code with Cornerstone house logo for the live website"
+                  width={160}
+                  height={160}
+                  unoptimized
+                  className="size-40 shrink-0 bg-white"
+                />
+                <div>
+                  <p className="text-sm leading-relaxed text-brand-ink/70">
+                    Scan this with a phone camera to open the live site. Download the
+                    square image for business cards, or open the print page for a flyer.
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <a
+                      href="/images/website-qr.png"
+                      download="cornerstone-website-qr.png"
+                      className="inline-flex h-10 items-center bg-brand-gold px-4 text-sm font-semibold text-white"
+                    >
+                      Download QR
+                    </a>
+                    <a
+                      href="/qr"
+                      className="inline-flex h-10 items-center border border-black/10 px-4 text-sm font-semibold text-brand-ink"
+                    >
+                      Print page
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         ) : null}
 
@@ -355,7 +397,13 @@ export function OfficeDashboard() {
                       </p>
                     </div>
                     <p className="text-xs font-semibold tracking-wide text-brand-gold uppercase">
-                      {item.delivery === "email" ? "Emailed" : "Shown on site"}
+                      {item.officeNotified
+                        ? item.officeChannel === "formsubmit-pending"
+                          ? "Check Gmail to confirm email"
+                          : "Emailed to office"
+                        : item.delivery === "email"
+                          ? "Client emailed"
+                          : "Saved on site"}
                     </p>
                   </div>
                   <p className="mt-3 text-sm">
